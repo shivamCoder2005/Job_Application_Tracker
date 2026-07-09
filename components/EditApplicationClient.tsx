@@ -59,7 +59,7 @@ export function EditApplicationClient({ application }: EditApplicationClientProp
   });
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       {/* Back */}
       <Link
         href={`/applications/${application.id}`}
