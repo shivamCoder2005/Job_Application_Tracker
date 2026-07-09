@@ -50,6 +50,10 @@ export function InterviewModal({ open, onClose }: InterviewModalProps) {
   const [errors, setErrors] = useState<Partial<FormState>>({});
   const [search, setSearch] = useState("");
 
+  const selectedApp = applications.find(a => a.id === form.applicationId);
+  const searchString = selectedApp ? `${selectedApp.company} — ${selectedApp.role}` : "";
+  const showDropdown = search !== searchString;
+
   const filteredApps = applications.filter(
     (app) =>
       app.company.toLowerCase().includes(search.toLowerCase()) ||
@@ -131,6 +135,7 @@ export function InterviewModal({ open, onClose }: InterviewModalProps) {
             </h2>
           </div>
           <button
+            type="button"
             onClick={handleClose}
             className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
@@ -140,45 +145,54 @@ export function InterviewModal({ open, onClose }: InterviewModalProps) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Application selector */}
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Application <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                if (form.applicationId) setForm(f => ({ ...f, applicationId: "" }));
+              }}
               placeholder="Search company or role..."
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-300 mb-2"
-            />
-            <div className="border border-gray-200 rounded-lg max-h-36 overflow-y-auto">
-              {filteredApps.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">
-                  No applications found
-                </p>
-              ) : (
-                filteredApps.map((app) => (
-                  <button
-                    key={app.id}
-                    type="button"
-                    onClick={() => {
-                      setForm((f) => ({ ...f, applicationId: app.id }));
-                      setSearch(`${app.company} — ${app.role}`);
-                      if (errors.applicationId)
-                        setErrors((e) => ({ ...e, applicationId: undefined }));
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 py-2 text-sm transition-colors hover:bg-violet-50",
-                      form.applicationId === app.id &&
-                        "bg-violet-100 text-violet-700"
-                    )}
-                  >
-                    <span className="font-medium">{app.company}</span>
-                    <span className="text-gray-400 ml-1">— {app.role}</span>
-                  </button>
-                ))
+              className={cn(
+                "w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-300",
+                errors.applicationId ? "border-red-300" : "border-gray-200",
+                showDropdown ? "mb-2" : "mb-0"
               )}
-            </div>
+            />
+            {showDropdown && (
+              <div className="absolute z-10 w-full bg-white border border-gray-200 shadow-lg rounded-lg max-h-48 overflow-y-auto">
+                {filteredApps.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">
+                    No applications found
+                  </p>
+                ) : (
+                  filteredApps.map((app) => (
+                    <button
+                      key={app.id}
+                      type="button"
+                      onClick={() => {
+                        setForm((f) => ({ ...f, applicationId: app.id }));
+                        setSearch(`${app.company} — ${app.role}`);
+                        if (errors.applicationId)
+                          setErrors((e) => ({ ...e, applicationId: undefined }));
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2.5 text-sm transition-colors hover:bg-violet-50 border-b border-gray-50 last:border-0",
+                        form.applicationId === app.id &&
+                          "bg-violet-100 text-violet-700"
+                      )}
+                    >
+                      <span className="font-medium">{app.company}</span>
+                      <span className="text-gray-400 ml-1">— {app.role}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
             {errors.applicationId && (
               <p className="text-xs text-red-500 mt-1">{errors.applicationId}</p>
             )}
