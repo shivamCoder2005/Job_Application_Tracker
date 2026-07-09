@@ -1,7 +1,8 @@
 // app/api/interviews/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getInterviews, createInterview, getApplicationById } from "@/lib/data";
+import { getInterviews, createInterview } from "@/services/interview.service";
+import { getApplicationById } from "@/services/application.service";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

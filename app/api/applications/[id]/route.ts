@@ -5,7 +5,7 @@ import {
   getApplicationById,
   updateApplication,
   deleteApplication,
-} from "@/lib/data";
+} from "@/services/application.service";
 import { isValidUrl, isValidDate, isPastOrToday } from "@/lib/utils";
 import type { ApplicationStatus, WorkType } from "@/types/job";
 
@@ -33,11 +33,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const body = await request.json() as Record<string, unknown>;
 
     // Validate fields if provided
-    if (typeof body.company === "string" && body.company.trim().length === 0) {
-      return NextResponse.json({ error: "company cannot be empty" }, { status: 400 });
+    if (typeof body.company === "string" && body.company.trim().length < 2) {
+      return NextResponse.json({ error: "company must be at least 2 characters" }, { status: 400 });
     }
-    if (typeof body.role === "string" && body.role.trim().length === 0) {
-      return NextResponse.json({ error: "role cannot be empty" }, { status: 400 });
+    if (typeof body.role === "string" && body.role.trim().length < 2) {
+      return NextResponse.json({ error: "role must be at least 2 characters" }, { status: 400 });
     }
 
     const url = typeof body.url === "string" ? body.url.trim() : undefined;

@@ -28,18 +28,9 @@ export function ApplicationDetailClient({
     (i) => i.applicationId === applicationId
   );
 
-  const handleEdit = async (interview: Interview) => {
-    const outcomeInput = window.prompt(
-      `Update outcome for Round ${interview.round} (pass/fail/pending):`,
-      interview.outcome ?? "pending"
-    );
-    if (!outcomeInput) return;
-    const outcome = outcomeInput.trim() as "pass" | "fail" | "pending";
-    if (!["pass", "fail", "pending"].includes(outcome)) {
-      alert("Invalid outcome. Use: pass, fail, or pending");
-      return;
-    }
-    await dispatch(editInterview({ id: interview.id, data: { outcome } }));
+  const handleOutcomeChange = async (id: string, outcome: Interview["outcome"]) => {
+    if (!outcome) return;
+    await dispatch(editInterview({ id, data: { outcome } }));
   };
 
   const handleDelete = async (id: string) => {
@@ -53,7 +44,7 @@ export function ApplicationDetailClient({
         <InterviewCard
           key={interview.id}
           interview={interview}
-          onEdit={handleEdit}
+          onOutcomeChange={handleOutcomeChange}
           onDelete={handleDelete}
         />
       ))}

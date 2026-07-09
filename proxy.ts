@@ -18,9 +18,9 @@ export function proxy(request: NextRequest) {
   }
 
   // Log path, method, and timestamp to console
-  console.log(
-    `[Proxy] ${request.method} ${pathname} at ${new Date().toISOString()}`
-  );
+  // console.log(
+  //   `[Proxy] ${request.method} ${pathname} at ${new Date().toISOString()}`
+  // );
 
   // Read job_tracker_session cookie
   const sessionCookie = request.cookies.get("job_tracker_session");

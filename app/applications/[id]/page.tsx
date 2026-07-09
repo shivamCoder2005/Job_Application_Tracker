@@ -12,9 +12,10 @@ import {
   TagIcon,
   PencilIcon,
 } from "lucide-react";
-import { getApplicationById, getInterviews } from "@/lib/data";
+
 import { StatusPipeline } from "@/components/StatusPipeline";
 import { ApplicationDetailClient } from "@/components/ApplicationDetailClient";
+
 import {
   formatDate,
   getStatusColor,
@@ -28,13 +29,28 @@ interface PageProps {
 
 export default async function ApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const application = getApplicationById(id);
 
-  if (!application) {
+  // Build the absolute URL for the fetch calls using the host header
+  const { headers } = await import("next/headers");
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const forwardedProto = headersList.get("x-forwarded-proto");
+  const protocol = forwardedProto || (host.includes("localhost") ? "http" : "https");
+  const baseUrl = `${protocol}://${host}`;
+
+  const [appRes, intRes] = await Promise.all([
+    fetch(`${baseUrl}/api/applications/${id}`, { cache: "no-store" }),
+    fetch(`${baseUrl}/api/interviews?applicationId=${id}`, { cache: "no-store" })
+  ]);
+
+  if (!appRes.ok) {
     notFound();
   }
 
-  const interviews = getInterviews(id);
+  const application: import("@/types/job").JobApplication = await appRes.json();
+  const allInterviews: import("@/types/job").Interview[] = await intRes.json();
+  // Ensure we only get interviews for this app (API should filter, but just in case)
+  const interviews = allInterviews.filter((i) => i.applicationId === id);
 
   return (
     <div className="space-y-6 max-w-4xl">

@@ -1,10 +1,6 @@
-// lib/data.ts
-// In-memory data store with module-level singleton arrays
-
 import type { JobApplication, Interview } from "@/types/job";
 
-// Seed data for initial state
-const seedApplications: JobApplication[] = [
+export const seedApplications: JobApplication[] = [
   {
     id: "app-1",
     company: "Stripe",
@@ -117,13 +113,13 @@ const seedApplications: JobApplication[] = [
   },
 ];
 
-const seedInterviews: Interview[] = [
+export const seedInterviews: Interview[] = [
   {
     id: "int-1",
     applicationId: "app-1",
     round: 1,
     type: "phone",
-    scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
+    scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 30,
     interviewerName: "Sarah Kim",
     notes: "Initial screening call. Discuss background and interest in the role.",
@@ -134,7 +130,7 @@ const seedInterviews: Interview[] = [
     applicationId: "app-1",
     round: 2,
     type: "technical",
-    scheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+    scheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 90,
     interviewerName: "John Lee",
     notes: "Technical coding round. Focus on React and data structures.",
@@ -145,7 +141,7 @@ const seedInterviews: Interview[] = [
     applicationId: "app-2",
     round: 1,
     type: "video",
-    scheduledAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day from now
+    scheduledAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 45,
     interviewerName: "Alex Chen",
     notes: "Meet the team. Discuss DevRel experience and content creation.",
@@ -156,7 +152,7 @@ const seedInterviews: Interview[] = [
     applicationId: "app-4",
     round: 1,
     type: "hr",
-    scheduledAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
+    scheduledAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 30,
     interviewerName: "Mike Johnson",
     notes: "HR screening. Discussed compensation expectations.",
@@ -167,112 +163,9 @@ const seedInterviews: Interview[] = [
     applicationId: "app-4",
     round: 2,
     type: "technical",
-    scheduledAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+    scheduledAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 120,
     notes: "System design and live coding challenge.",
     outcome: "pass",
   },
 ];
-
-// Mutable in-memory arrays
-let applications: JobApplication[] = [...seedApplications];
-let interviews: Interview[] = [...seedInterviews];
-
-// Applications CRUD
-export function getApplications(): JobApplication[] {
-  return [...applications].sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
-}
-
-export function getApplicationById(id: string): JobApplication | undefined {
-  return applications.find((app) => app.id === id);
-}
-
-export function createApplication(
-  data: Omit<JobApplication, "id" | "createdAt" | "updatedAt">
-): JobApplication {
-  const now = new Date().toISOString();
-  const newApp: JobApplication = {
-    ...data,
-    id: crypto.randomUUID(),
-    createdAt: now,
-    updatedAt: now,
-  };
-  applications = [newApp, ...applications];
-  return newApp;
-}
-
-export function updateApplication(
-  id: string,
-  data: Partial<Omit<JobApplication, "id" | "createdAt">>
-): JobApplication | null {
-  const index = applications.findIndex((app) => app.id === id);
-  if (index === -1) return null;
-  const updated: JobApplication = {
-    ...applications[index],
-    ...data,
-    updatedAt: new Date().toISOString(),
-  };
-  applications = [
-    ...applications.slice(0, index),
-    updated,
-    ...applications.slice(index + 1),
-  ];
-  return updated;
-}
-
-export function deleteApplication(id: string): boolean {
-  const before = applications.length;
-  applications = applications.filter((app) => app.id !== id);
-  // Delete associated interviews
-  interviews = interviews.filter((int) => int.applicationId !== id);
-  return applications.length < before;
-}
-
-// Interviews CRUD
-export function getInterviews(applicationId?: string): Interview[] {
-  if (applicationId) {
-    return interviews.filter((int) => int.applicationId === applicationId);
-  }
-  return [...interviews];
-}
-
-export function getInterviewById(id: string): Interview | undefined {
-  return interviews.find((int) => int.id === id);
-}
-
-export function createInterview(
-  data: Omit<Interview, "id">
-): Interview {
-  const newInterview: Interview = {
-    ...data,
-    id: crypto.randomUUID(),
-  };
-  interviews = [...interviews, newInterview];
-  return newInterview;
-}
-
-export function updateInterview(
-  id: string,
-  data: Partial<Omit<Interview, "id">>
-): Interview | null {
-  const index = interviews.findIndex((int) => int.id === id);
-  if (index === -1) return null;
-  const updated: Interview = {
-    ...interviews[index],
-    ...data,
-  };
-  interviews = [
-    ...interviews.slice(0, index),
-    updated,
-    ...interviews.slice(index + 1),
-  ];
-  return updated;
-}
-
-export function deleteInterview(id: string): boolean {
-  const before = interviews.length;
-  interviews = interviews.filter((int) => int.id !== id);
-  return interviews.length < before;
-}

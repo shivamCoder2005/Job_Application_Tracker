@@ -11,7 +11,8 @@ export default async function ApplicationsPage() {
   // Build the absolute URL for the fetch call using the host header
   const headersList = await headers();
   const host = headersList.get("host") ?? "localhost:3000";
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const forwardedProto = headersList.get("x-forwarded-proto");
+  const protocol = forwardedProto || (host.includes("localhost") ? "http" : "https");
 
   const res = await fetch(`${protocol}://${host}/api/applications`, {
     cache: "no-store",

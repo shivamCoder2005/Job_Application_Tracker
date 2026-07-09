@@ -88,8 +88,32 @@ function validateForm(values: FormValues): FormErrors {
     errors.role = "Role must be at least 2 characters";
   }
 
+  if (values.location && values.location.trim().length < 2) {
+    errors.location = "Location must be at least 2 characters";
+  }
+
+  if (values.salary && values.salary.trim().length > 0) {
+    if (values.salary.trim().length < 3) {
+      errors.salary = "Please provide a clear salary or range (e.g. $80k - $100k)";
+    } else if (values.salary.match(/[-\u2013\u2014]|(?:\s+to\s+)/i)) {
+      const cleanSalary = values.salary.replace(/,/g, '');
+      const numberMatches = cleanSalary.match(/\d+(?:\.\d+)?/g);
+      if (numberMatches && numberMatches.length >= 2) {
+        const num1 = parseFloat(numberMatches[0]);
+        const num2 = parseFloat(numberMatches[1]);
+        if (num1 > num2) {
+          errors.salary = "Minimum salary cannot be greater than maximum salary";
+        }
+      }
+    }
+  }
+
   if (values.url && !isValidUrl(values.url)) {
     errors.url = "Must be a valid URL (e.g. https://example.com)";
+  }
+
+  if (values.contactEmail && !/^\S+@\S+\.\S+$/.test(values.contactEmail)) {
+    errors.contactEmail = "Must be a valid email address";
   }
 
   if (values.appliedDate) {

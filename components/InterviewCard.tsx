@@ -2,7 +2,7 @@
 
 // components/InterviewCard.tsx
 
-import React from "react";
+import React, { useState } from "react";
 import {
   ClockIcon,
   UserIcon,
@@ -19,7 +19,8 @@ import type { Interview } from "@/types/job";
 
 interface InterviewCardProps {
   interview: Interview;
-  onEdit: (interview: Interview) => void;
+  companyName?: string;
+  onOutcomeChange: (id: string, outcome: Interview["outcome"]) => void;
   onDelete: (id: string) => void;
   className?: string;
 }
@@ -31,6 +32,8 @@ const TYPE_LABELS: Record<Interview["type"], string> = {
   technical: "💻 Technical",
   hr: "👤 HR",
 };
+
+const OUTCOMES: NonNullable<Interview["outcome"]>[] = ["pass", "fail", "pending"];
 
 function OutcomeBadge({ outcome }: { outcome: Interview["outcome"] }) {
   if (!outcome || outcome === "pending") {
@@ -59,10 +62,13 @@ function OutcomeBadge({ outcome }: { outcome: Interview["outcome"] }) {
 
 export function InterviewCard({
   interview,
-  onEdit,
+  companyName,
+  onOutcomeChange,
   onDelete,
   className,
 }: InterviewCardProps) {
+  const [outcomeOpen, setOutcomeOpen] = useState(false);
+
   const isOverdue =
     new Date(interview.scheduledAt) < new Date() &&
     (!interview.outcome || interview.outcome === "pending");
@@ -80,7 +86,7 @@ export function InterviewCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-gray-900">
-              Round {interview.round}
+              {companyName ? `${companyName} — Round ${interview.round}` : `Round ${interview.round}`}
             </span>
             <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
               {TYPE_LABELS[interview.type]}
@@ -96,14 +102,48 @@ export function InterviewCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 flex-shrink-0 relative">
           <button
-            onClick={() => onEdit(interview)}
+            onClick={() => setOutcomeOpen((v) => !v)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-            aria-label="Edit interview"
+            aria-label="Update outcome"
           >
             <PencilIcon className="w-3.5 h-3.5" />
           </button>
+          
+          {outcomeOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOutcomeOpen(false);
+                }}
+              />
+              <div className="absolute right-0 top-8 z-20 w-36 bg-white rounded-xl border border-gray-100 shadow-lg py-1">
+                <p className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  Outcome
+                </p>
+                {OUTCOMES.map((o) => (
+                  <button
+                    key={o}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOutcomeOpen(false);
+                      onOutcomeChange(interview.id, o);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors capitalize"
+                  >
+                    {o === "pass" && <CheckCircleIcon className="w-4 h-4 text-emerald-500" />}
+                    {o === "fail" && <XCircleIcon className="w-4 h-4 text-red-500" />}
+                    {o === "pending" && <MinusCircleIcon className="w-4 h-4 text-gray-400" />}
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
           <button
             onClick={() => onDelete(interview.id)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"

@@ -1,7 +1,7 @@
 // app/api/interviews/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getInterviewById, updateInterview, deleteInterview } from "@/lib/data";
+import { getInterviewById, updateInterview, deleteInterview } from "@/services/interview.service";
 
 interface RouteContext {
   params: Promise<{ id: string }>;

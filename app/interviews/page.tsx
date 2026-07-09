@@ -14,6 +14,7 @@ import type { Interview } from "@/types/job";
 export default function InterviewsPage() {
   const dispatch = useAppDispatch();
   const interviews = useAppSelector((state) => state.interviews.interviews);
+  const applications = useAppSelector((state) => state.applications.applications);
   const interviewStatus = useAppSelector((state) => state.interviews.status);
   const [modalOpen, setModalOpen] = useState(false);
   const [pastExpanded, setPastExpanded] = useState(false);
@@ -39,23 +40,18 @@ export default function InterviewsPage() {
         new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
     );
 
-  const handleEdit = async (interview: Interview) => {
-    const outcomeInput = window.prompt(
-      `Update outcome for Round ${interview.round} (pass/fail/pending):`,
-      interview.outcome ?? "pending"
-    );
-    if (!outcomeInput) return;
-    const outcome = outcomeInput.trim() as "pass" | "fail" | "pending";
-    if (!["pass", "fail", "pending"].includes(outcome)) {
-      alert("Invalid outcome. Use: pass, fail, or pending");
-      return;
-    }
-    await dispatch(editInterview({ id: interview.id, data: { outcome } }));
+  const handleOutcomeChange = async (id: string, outcome: Interview["outcome"]) => {
+    if (!outcome) return;
+    await dispatch(editInterview({ id, data: { outcome } }));
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this interview?")) return;
     await dispatch(cancelInterview(id));
+  };
+
+  const getCompanyName = (applicationId: string) => {
+    return applications.find((a) => a.id === applicationId)?.company;
   };
 
   return (
@@ -110,7 +106,8 @@ export default function InterviewsPage() {
               <InterviewCard
                 key={interview.id}
                 interview={interview}
-                onEdit={handleEdit}
+                companyName={getCompanyName(interview.applicationId)}
+                onOutcomeChange={handleOutcomeChange}
                 onDelete={handleDelete}
               />
             ))}
@@ -144,7 +141,8 @@ export default function InterviewsPage() {
                 <InterviewCard
                   key={interview.id}
                   interview={interview}
-                  onEdit={handleEdit}
+                  companyName={getCompanyName(interview.applicationId)}
+                  onOutcomeChange={handleOutcomeChange}
                   onDelete={handleDelete}
                 />
               ))}

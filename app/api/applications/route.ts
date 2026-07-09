@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getApplications,
   createApplication,
-} from "@/lib/data";
+} from "@/services/application.service";
 import type { ApplicationStatus, WorkType } from "@/types/job";
 import { isValidUrl, isValidDate, isPastOrToday } from "@/lib/utils";
 
@@ -49,14 +49,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as Record<string, unknown>;
+    console.log("creating application:", body);
 
     // Validate required fields
     const company = typeof body.company === "string" ? body.company.trim() : "";
     const role = typeof body.role === "string" ? body.role.trim() : "";
 
-    if (!company || !role) {
+    if (!company || company.length < 2) {
       return NextResponse.json(
-        { error: "company and role are required" },
+        { error: "company is required and must be at least 2 characters" },
+        { status: 400 }
+      );
+    }
+    
+    if (!role || role.length < 2) {
+      return NextResponse.json(
+        { error: "role is required and must be at least 2 characters" },
         { status: 400 }
       );
     }

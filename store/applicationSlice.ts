@@ -70,7 +70,9 @@ export const createApplication = createAsyncThunk<
       const err = await res.json().catch(() => ({}));
       return rejectWithValue((err as { error?: string }).error ?? "Failed to create application");
     }
-    return (await res.json()) as JobApplication;
+    const responseData = await res.json();
+    console.log("API response:", responseData);
+    return responseData as JobApplication;
   } catch (err) {
     return rejectWithValue(
       err instanceof Error ? err.message : "Network error"

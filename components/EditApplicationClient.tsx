@@ -1,25 +1,28 @@
 "use client";
 
-// app/add/page.tsx — Client Component
-
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon, SaveIcon } from "lucide-react";
 import { useAppDispatch } from "@/store";
-import { createApplication } from "@/store/applicationSlice";
+import { editApplication } from "@/store/applicationSlice";
 import { useApplicationForm } from "@/hooks/useApplicationForm";
 import { cn, ALL_STATUSES, formatStatusLabel } from "@/lib/utils";
-import type { ApplicationStatus, WorkType } from "@/types/job";
+import type { JobApplication, WorkType } from "@/types/job";
 
 const WORK_TYPES: WorkType[] = ["remote", "hybrid", "on-site"];
 
-export default function AddApplicationPage() {
+interface EditApplicationClientProps {
+  application: JobApplication;
+}
+
+export function EditApplicationClient({ application }: EditApplicationClientProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [saving, setSaving] = useState(false);
 
-  const { values, errors, handleChange, handleSubmit } = useApplicationForm();
+  const { values, errors, handleChange, setFieldValue, handleSubmit, isDirty } =
+    useApplicationForm(application);
 
   const onSubmit = handleSubmit(async (formValues) => {
     setSaving(true);
@@ -29,27 +32,29 @@ export default function AddApplicationPage() {
       .filter(Boolean);
 
     const result = await dispatch(
-      createApplication({
-        company: formValues.company,
-        role: formValues.role,
-        location: formValues.location,
-        workType: formValues.workType,
-        salary: formValues.salary || undefined,
-        status: formValues.status,
-        appliedDate: formValues.appliedDate,
-        url: formValues.url || undefined,
-        contactName: formValues.contactName || undefined,
-        contactEmail: formValues.contactEmail || undefined,
-        notes: formValues.notes,
-        tags: tagsArray,
+      editApplication({
+        id: application.id,
+        data: {
+          company: formValues.company,
+          role: formValues.role,
+          location: formValues.location,
+          workType: formValues.workType,
+          salary: formValues.salary || undefined,
+          status: formValues.status,
+          appliedDate: formValues.appliedDate,
+          url: formValues.url || undefined,
+          contactName: formValues.contactName || undefined,
+          contactEmail: formValues.contactEmail || undefined,
+          notes: formValues.notes,
+          tags: tagsArray,
+        },
       })
     );
 
     setSaving(false);
 
-    if (createApplication.fulfilled.match(result)) {
-      router.refresh();
-      router.push("/applications");
+    if (editApplication.fulfilled.match(result)) {
+      router.push(`/applications/${application.id}`);
     }
   });
 
@@ -57,16 +62,16 @@ export default function AddApplicationPage() {
     <div className="max-w-2xl space-y-6">
       {/* Back */}
       <Link
-        href="/applications"
+        href={`/applications/${application.id}`}
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
       >
         <ArrowLeftIcon className="w-4 h-4" />
-        Back to Applications
+        Back to Application
       </Link>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h1 className="text-xl font-bold text-gray-900 mb-6">
-          Add New Application
+          Edit Application
         </h1>
 
         <form onSubmit={onSubmit} className="space-y-4">
@@ -81,7 +86,6 @@ export default function AddApplicationPage() {
                 name="company"
                 value={values.company}
                 onChange={handleChange}
-                placeholder="e.g., Stripe"
                 className={cn(
                   "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
                   errors.company ? "border-red-300" : "border-gray-200"
@@ -100,7 +104,6 @@ export default function AddApplicationPage() {
                 name="role"
                 value={values.role}
                 onChange={handleChange}
-                placeholder="e.g., Senior Frontend Engineer"
                 className={cn(
                   "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
                   errors.role ? "border-red-300" : "border-gray-200"
@@ -123,7 +126,6 @@ export default function AddApplicationPage() {
                 name="location"
                 value={values.location}
                 onChange={handleChange}
-                placeholder="e.g., San Francisco, CA"
                 className={cn(
                   "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
                   errors.location ? "border-red-300" : "border-gray-200"
@@ -145,14 +147,14 @@ export default function AddApplicationPage() {
               >
                 {WORK_TYPES.map((wt) => (
                   <option key={wt} value={wt}>
-                    {wt}
+                    {wt.charAt(0).toUpperCase() + wt.slice(1)}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Status + Applied Date */}
+          {/* Status + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -183,57 +185,60 @@ export default function AddApplicationPage() {
                 name="appliedDate"
                 value={values.appliedDate}
                 onChange={handleChange}
+                max={new Date().toISOString().split("T")[0]}
                 className={cn(
                   "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
                   errors.appliedDate ? "border-red-300" : "border-gray-200"
                 )}
               />
               {errors.appliedDate && (
-                <p className="text-xs text-red-500 mt-1">{errors.appliedDate}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.appliedDate}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Salary */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Salary Range
-            </label>
-            <input
-              type="text"
-              name="salary"
-              value={values.salary}
-              onChange={handleChange}
-              placeholder="e.g., $80,000 – $100,000"
-              className={cn(
-                "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
-                errors.salary ? "border-red-300" : "border-gray-200"
+          {/* Salary + URL */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Salary
+              </label>
+              <input
+                type="text"
+                name="salary"
+                value={values.salary}
+                onChange={handleChange}
+                placeholder="e.g. $100k - $120k"
+                className={cn(
+                  "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
+                  errors.salary ? "border-red-300" : "border-gray-200"
+                )}
+              />
+              {errors.salary && (
+                <p className="text-xs text-red-500 mt-1">{errors.salary}</p>
               )}
-            />
-            {errors.salary && (
-              <p className="text-xs text-red-500 mt-1">{errors.salary}</p>
-            )}
-          </div>
-
-          {/* Job URL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Job Posting URL
-            </label>
-            <input
-              type="url"
-              name="url"
-              value={values.url}
-              onChange={handleChange}
-              placeholder="https://..."
-              className={cn(
-                "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
-                errors.url ? "border-red-300" : "border-gray-200"
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                URL
+              </label>
+              <input
+                type="url"
+                name="url"
+                value={values.url}
+                onChange={handleChange}
+                placeholder="https://..."
+                className={cn(
+                  "w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300",
+                  errors.url ? "border-red-300" : "border-gray-200"
+                )}
+              />
+              {errors.url && (
+                <p className="text-xs text-red-500 mt-1">{errors.url}</p>
               )}
-            />
-            {errors.url && (
-              <p className="text-xs text-red-500 mt-1">{errors.url}</p>
-            )}
+            </div>
           </div>
 
           {/* Contact */}
@@ -280,7 +285,7 @@ export default function AddApplicationPage() {
               name="tags"
               value={values.tags}
               onChange={handleChange}
-              placeholder="React, TypeScript, Startup (comma-separated)"
+              placeholder="React, TypeScript, Startup (comma separated)"
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300"
             />
           </div>
@@ -295,26 +300,29 @@ export default function AddApplicationPage() {
               value={values.notes}
               onChange={handleChange}
               rows={4}
-              placeholder="Add any notes about this application..."
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300 resize-none"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="pt-4 flex items-center justify-end gap-3 border-t">
             <Link
-              href="/applications"
-              className="flex-1 text-center px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+              href={`/applications/${application.id}`}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-xl transition-colors"
+              disabled={saving || !isDirty}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-xl hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <PlusIcon className="w-4 h-4" />
-              {saving ? "Adding..." : "Add Application"}
+              {saving ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <SaveIcon className="w-4 h-4" />
+              )}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
